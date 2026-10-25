@@ -1,38 +1,49 @@
 # Homelab
 
-A personal lab built on a **Proxmox VE** virtualization server, used to practice systems administration and networking hands-on. Running since April 2026.
+A single-node **Proxmox VE** lab I've run since April 2026 to practice Linux administration, networking, and Windows infrastructure hands-on.
 
-> Addresses, hostnames, domain names, and credentials are intentionally left out of this repo.
+> Public IPs, internal addresses, hostnames, domain names, and credentials are intentionally left out of this repo.
 
-## What's in it
+## Why I built it
 
-| Area | What I run / practice |
-|---|---|
-| Virtualization | Proxmox VE hosting Windows and Linux VMs, including GPU passthrough |
-| Networking & firewall | pfSense for firewall rules, routing, and network segmentation |
-| Directory services | Windows Server with Active Directory in a lab domain |
-| Linux | Linux VMs for general administration practice, plus a Linux media server |
-| Core network services | DNS and DHCP |
-| Remote access | Tailscale for secure access to the lab from outside the network |
+At work I support Windows imaging, Active Directory, and Linux and Windows troubleshooting. The lab lets me go further than the job does: designing the network myself, running my own firewall and domain, and breaking things without affecting anyone else.
 
-## Layout
-
-pfSense runs as a VM on the Proxmox host and routes traffic for the lab network.
+## Architecture
 
 ```mermaid
-flowchart TD
-    Internet((Internet)) --> PVE
+flowchart LR
+    NET((Internet)) --> HR[Home router]
+    HR -- pfSense WAN --> PF
+    REMOTE[My laptop / phone] -. Tailscale VPN .-> PF
     subgraph PVE[Proxmox VE host]
-        PF[pfSense VM<br/>firewall · routing · DHCP · DNS]
-        PF --> LAN[Lab network]
-        LAN --> DC[Windows Server<br/>Active Directory]
-        LAN --> LNX[Linux VMs]
-        LAN --> MEDIA[Linux media server]
+        PF[pfSense VM<br/>firewall · routing · DHCP · DNS · Tailscale] -- pfSense LAN --> LAN[Lab network]
+        LAN --> DC[Windows Server<br/>AD DS]
+        LAN --> LNX[Linux VMs & containers]
+        LAN --> MEDIA[Media server VM<br/>GPU passthrough]
     end
-    TS[Tailscale] -. remote access .-> PVE
 ```
+
+The lab sits **behind my home router**, so pfSense's WAN side is on the home network and everything in the lab is on a separate network behind pfSense (double NAT). This is a single-host learning lab, not a high-availability setup.
+
+## Components
+
+| Component | Role in the lab |
+|---|---|
+| **Proxmox VE** | Hypervisor for every guest: Linux and Windows VMs and Linux containers, connected through Proxmox network bridges and virtual NICs |
+| **pfSense (VM)** | Router and firewall for the lab network. Firewall rules, routing, DHCP, and DNS |
+| **Tailscale (on pfSense)** | VPN for remote access to the lab without opening ports on the home router |
+| **Windows Server** | Active Directory Domain Services, for domain and AD administration practice |
+| **Linux VMs & containers** | Linux server administration: systemd services, logs, permissions, packages, SSH |
+| **Media server VM** | Linux media server with a GPU passed through from the host |
+
+## What I'm practicing
+
+- **Networking:** firewall policy, routing, DHCP and DNS on pfSense, double NAT, and VPN remote access
+- **Virtualization:** VMs vs. containers, Proxmox bridges and virtual NICs, and PCIe/GPU passthrough
+- **Windows infrastructure:** standing up AD DS and running a domain
+- **Linux administration:** service management, logs, permissions, SSH, and troubleshooting on server distros
 
 ## Related
 
-- [My GitHub profile](https://github.com/Ismael0550)
+- [GitHub profile](https://github.com/Ismael0550)
 - [LinkedIn](https://www.linkedin.com/in/ismael-saldivar-74a75b112/)
